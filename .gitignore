@@ -1,0 +1,17 @@
+# all
+*.pyc
+__pycache__
+.DS_Store
+.env
+venv
+*.log
+*.egg-info
+*.dist-info
+try.py
+
+# for pip library
+*.egg-info/
+dist/
+build/
+*.egg
+*.whl
