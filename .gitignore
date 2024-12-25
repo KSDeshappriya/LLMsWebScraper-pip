@@ -8,6 +8,7 @@ venv
 *.egg-info
 *.dist-info
 try.py
+todo/
 
 # for pip library
 *.egg-info/

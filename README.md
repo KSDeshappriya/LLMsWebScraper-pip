@@ -26,6 +26,7 @@ LLM Web Scraper is a Python library that uses a generative AI model to extract s
     from LLMsWebScraper import LLMsWebScraper  
     import os
     from dotenv import load_dotenv
+    import logging
 
     # Load environment variables
     load_dotenv()
