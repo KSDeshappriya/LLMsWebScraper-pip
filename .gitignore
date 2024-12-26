@@ -3,7 +3,7 @@
 __pycache__
 .DS_Store
 .env
-venv
+.venv
 *.log
 *.egg-info
 *.dist-info
