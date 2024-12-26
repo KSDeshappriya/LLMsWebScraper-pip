@@ -12,6 +12,13 @@ jobs:
 
     runs-on: ubuntu-22.04
 
+    environment:
+      name: LLMsWebScraper
+      url: https://pypi.org/project/LLMsWebScraper/
+
+    permissions:
+      id-token: ${{ secrets.PYPI_API_KEY }}  # IMPORTANT: mandatory for trusted publishing
+
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python
@@ -22,11 +29,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
-    - name: Build binary wheel and a source tarball
-      run: python setup.py sdist
+   
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@master
-      with:
-        password: ${{ secrets.PYPI_API_KEY }}
-        repository_url: https://upload.pypi.org/legacy/
+      run: |
+        git fetch --all --tags
+        python setup.py sdist bdist_wheel
+        twine upload dist/*
     
