@@ -32,7 +32,11 @@ LLM Web Scraper is a Python library that uses a generative AI model to extract s
     load_dotenv()
 
     # Initialize the scraper
-    scraper = LLMsWebScraper(api_key=os.getenv("Gemini_API_KEY"))
+    scraper = LLMsWebScraper(model_type="gemini", model_name="gemini-2.0-flash-exp", api_key=os.getenv("Gemini_API_KEY"))
+    # scraper = LLMsWebScraper(model_type="groq", model_name="llama3-8b-8192", api_key=os.getenv("Groq_API_KEY"))
+    # scraper = LLMsWebScraper(model_type="openai", model_name="gpt-4o-mini", api_key=os.getenv("OpenAI_API_KEY"))
+    # scraper = LLMsWebScraper(model_type="ollama", model_name="llama3.2", base_url="http://localhost:11434", api_key="")
+
 
     # Define instructions
     instructions = """

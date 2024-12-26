@@ -1,25 +1,61 @@
 import requests
-import google.generativeai as genai
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
+from langchain_community.chat_models import ChatOpenAI, ChatOllama
+from langchain_groq import ChatGroq
 import json
 import re
 import logging
 import os
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Literal
 from retrying import retry
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+ModelType = Literal["gemini", "openai", "groq", "ollama"]
+
 class LLMsWebScraper:
-    def __init__(self, api_key: str, model_name: str = "gemini-2.0-flash-exp"):
+    def __init__(
+        self, 
+        api_key: str = "", 
+        model_type: ModelType = "gemini",
+        model_name: str = "gemini-2.0-flash-exp",
+        base_url: Optional[str] = None,
+        temperature: float = 0.7
+    ):
         """Initialize the scraper with API key and model."""
         self.api_key = api_key
-        if not self.api_key:
-            raise ValueError(f"api key is not set.")
+        self.model_type = model_type
+        
+        if not self.api_key and model_type != "ollama":
+            raise ValueError(f"API key is not set for {model_type}.")
 
-        genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel(model_name=model_name)
+        if model_type == "gemini":
+            self.model = ChatGoogleGenerativeAI(
+                google_api_key=self.api_key,
+                model=model_name,
+                temperature=temperature,
+                convert_system_message_to_human=True
+            )
+        elif model_type == "openai":
+            self.model = ChatOpenAI(
+                api_key=self.api_key,
+                model_name=model_name,
+                temperature=temperature
+            )
+        elif model_type == "groq":
+            self.model = ChatGroq(
+                api_key=self.api_key,
+                model_name=model_name,
+                temperature=temperature
+            )
+        elif model_type == "ollama":
+            self.model = ChatOllama(
+                model=model_name,
+                base_url=base_url or "http://localhost:11434",
+                temperature=temperature
+            )
         
         self.prompt_template = PromptTemplate(
             input_variables=["html", "instructions"],
@@ -33,7 +69,7 @@ HTML Content:
 Extraction Instructions:
 {instructions}
 
-Please extract the information in a structured JSON format.
+Please extract the information in a structured JSON format. No want any extra words or sentences. Only give json Code.
 """
         )
 
@@ -50,11 +86,13 @@ Please extract the information in a structured JSON format.
 
     @retry(stop_max_attempt_number=3, wait_exponential_multiplier=1000)
     def __generate_output(self, input_data: str) -> str:
-        """Generate content using GenAI with retry logic."""
+        """Generate content using the selected model with retry logic."""
         try:
-            return self.model.generate_content(contents=input_data).text
+            response = self.model.invoke(input_data)
+            # print(response.content)
+            return response.content
         except Exception as e:
-            logging.warning(f"Error during content generation: {e}")
+            logging.warning(f"Error during content generation with {self.model_type}: {e}")
             raise
 
     def __extract_data(self, html_content: str, instructions: str) -> str:
@@ -64,7 +102,8 @@ Please extract the information in a structured JSON format.
 
     def __extract_json(self, md_code: str) -> Optional[Dict[str, Any]]:
         """Extract and parse JSON from markdown-style code."""
-        match = re.search(r'```json\s*({[\s\S]*?})\s*```', md_code)
+        match = re.search(r'```(?:[a-zA-Z]+)?\s*({[\s\S]*?})\s*```', md_code)
+        # print(match)
         if match:
             try:
                 return json.loads(match.group(1))

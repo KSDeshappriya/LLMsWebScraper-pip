@@ -42,8 +42,10 @@ setuptools.setup(
         "requests>=2.32.3",
         "retrying>=1.3.4",
         "python-dotenv>=1.0.1",
-        "google-generativeai>=0.8.3",
         "langchain>=0.3.13",
+        "langchain-community>=0.3.13",
+        "langchain-google-genai>=2.0.7",
+        "langchain-groq>=0.2.2",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
