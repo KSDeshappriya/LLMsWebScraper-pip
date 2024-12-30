@@ -237,8 +237,8 @@ This pip library is available under the [GPLv3](LICENSE) License.
 
 ## Contact
 
-Author: KSDeshappriya
-Email: ksdeshappriya.official@gmail.com
+- **Author**: KSDeshappriya
+- **Email**: ksdeshappriya.official@gmail.com
 
 ## Contribution
 
