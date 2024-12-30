@@ -7,8 +7,10 @@ __pycache__
 *.log
 *.egg-info
 *.dist-info
+*VERSION
 try.py
 todo/
+output/
 
 # for pip library
 *.egg-info/

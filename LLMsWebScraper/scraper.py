@@ -1,4 +1,5 @@
 import requests
+from bs4 import BeautifulSoup
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 from langchain_community.chat_models import ChatOpenAI, ChatOllama
@@ -8,6 +9,7 @@ import re
 import logging
 import os
 from typing import Optional, Dict, Any, Literal
+from markdownify import markdownify as md
 from retrying import retry
 
 # Configure logging
@@ -56,6 +58,13 @@ class LLMsWebScraper:
                 base_url=base_url or "http://localhost:11434",
                 temperature=temperature
             )
+        elif model_type == "other":
+            self.model = ChatOpenAI(
+                base_url=base_url,
+                api_key=self.api_key,
+                model_name=model_name,
+                temperature=temperature
+            )
         
         self.prompt_template = PromptTemplate(
             input_variables=["html", "instructions"],
@@ -74,21 +83,88 @@ Please extract the information in a structured JSON format. No want any extra wo
         )
 
     def __fetch_webpage(self, url: str) -> str:
-        """Fetch HTML content from a given URL."""
+        """Fetch HTML content from a given URL, extracting metadata and body."""
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
             logging.info("Webpage HTML content fetched successfully!")
-            return response.text
+            
+            # Extract body content only
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            TCIPatterns = {
+            'nav', 'menu', 'navbar', 'sidebar', 'drawer', 'breadcrumb', 
+            'side-nav', 'sidenav', 'header', 'footer', 'bottom-bar', 
+            'top-bar', 'ad-', 'ads-', 'advertisement', 'banner', 'promo', 
+            'sponsored', 'ads', 'popup', 'modal', 'overlay', 'dialog', 
+            'toast', 'alert', 'notification', 'tracking', 'analytics', 
+            'pixel', 'beacon', 'tag-manager', 'disclaimer', 'newsletter', 
+            'subscribe', 'signup', 'mailing-list', 'search', 'login', 
+            'register', 'sign-in', 'cookie', 'gdpr', 'consent', 'privacy', 
+            'terms', 'copyright', 'hidden', 'display-none', 'invisible', 
+            'spacer', 'gap', 'background', 'decoration', 'ornament', 
+            'pattern', 'gradient', 'carousel', 'slider', 'lightbox', 
+            'tooltip', 'dropdown', 'skeleton', 'placeholder', 'loading', 
+            'shimmer', 'spinner'
+            }
+
+            # Iterate in a while loop to handle tag decomposition correctly
+            tags_to_remove = soup.find_all()
+            while tags_to_remove: # Keep looping as long as there are elements left
+                tag = tags_to_remove.pop(0) # pop() so we only address one tag and keep the structure consistent
+
+                if any(pattern in soup.find_all().pop(0).get('class', []) for pattern in TCIPatterns):
+                    tag.decompose()
+                    continue # Move to next tag
+
+                if any(pattern in soup.find_all().pop(0).get('id', '') for pattern in TCIPatterns):
+                    tag.decompose()
+                    continue  # Move to next tag
+                    
+                if tag.name in TCIPatterns:
+                    tag.decompose()
+                    continue # Move to next tag
+
+
+            body = str(soup.find('body'))
+
+            # Combine patterns to remove unwanted tags
+            patterns = [
+                r'<script.*?>[\s\S]*?</script>',
+                r'<!--.*?-->',
+                r'<style.*?>[\s\S]*?</style>',
+                r'<meta.*?>',
+                r'<link.*?>',
+                r'<title.*?>[\s\S]*?</title>',
+                r'<noscript.*?>[\s\S]*?</noscript>'
+            ]
+            combined_pattern = '|'.join(patterns)
+            body = re.sub(combined_pattern, '', body)
+            
+            extracted_content = f"<a href=\"{url}\">This WebPage URL</a>{body}"
+
+            # self.toFile(extracted_content, "output/webpage.html")
+            return extracted_content
         except requests.RequestException as e:
             logging.error(f"Failed to fetch webpage: {e}")
             raise
+
+    # Optimize the input data which is used on the model to generate the output. these input data are the html content and instructions.
+    def __optimize_input_data(self, input_data: str) -> str:
+        """Optimize input data for the model."""
+        # Remove extra spaces and newlines
+        input_data = re.sub(r'\s+', ' ', input_data)
+        input_data = input_data.strip()
+        # convert html to markdown
+        input_data = md(input_data)
+        # self.toFile(input_data, "output/webpage.md")
+        return input_data
 
     @retry(stop_max_attempt_number=3, wait_exponential_multiplier=1000)
     def __generate_output(self, input_data: str) -> str:
         """Generate content using the selected model with retry logic."""
         try:
-            response = self.model.invoke(input_data)
+            response = self.model.invoke(self.__optimize_input_data(input_data))
             # print(response.content)
             return response.content
         except Exception as e:
