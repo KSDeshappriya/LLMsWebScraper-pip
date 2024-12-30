@@ -99,6 +99,7 @@ To address this issue, LLMs Web Scraper leverages advanced AI capabilities to in
   # scraper = LLMsWebScraper(model_type="groq", model_name="llama-3.3-70b-versatile", api_key=os.getenv("Groq_API_KEY"))
   # scraper = LLMsWebScraper(model_type="openai", model_name="gpt-4o-mini", api_key=os.getenv("OpenAI_API_KEY"))
   # scraper = LLMsWebScraper(model_type="ollama", model_name="llama3.2", base_url="http://localhost:11434", api_key="")
+  
   ## If you want to add a API that is compatible with the OpenAI API, then:
   # scraper = LLMsWebScraper(model_type="other", model_name="your-model", base_url="if-have-url", api_key="your-key") # Value of 'model_type' should be 'other'. Don't change that.
   ```
