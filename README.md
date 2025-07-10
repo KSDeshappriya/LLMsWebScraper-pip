@@ -1,5 +1,7 @@
 # LLMs Web Scraper
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/KSDeshappriya/LLMsWebScraper-pip)
+
 **LLMs Web Scraper** is an innovative Python library designed to simplify the process of extracting structured data from web pages using a generative AI model. Traditional web scraping methods often rely on fixed selectors, which can become outdated or broken due to frequent updates on websites. This can lead to significant maintenance challenges for developers and data analysts.
 
 To address this issue, LLMs Web Scraper leverages advanced AI capabilities to intelligently identify and extract relevant data, adapting to changes in web page structures without the need for constant manual adjustments. This dynamic approach not only saves time and effort but also enhances the reliability of data extraction processes. With LLMs Web Scraper, users can efficiently gather and utilize web data, ensuring that their projects remain up-to-date and functional in the face of evolving web content.
